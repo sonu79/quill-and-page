@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { PenLine, Users, Settings, FileText } from 'lucide-react';
 
 const Admin = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -27,6 +29,7 @@ const Admin = () => {
             icon={<FileText className="h-8 w-8" />}
             description="Create, edit, and manage all articles"
             actionText="Manage Articles"
+            onClick={() => {/* Future functionality */}}
           />
           
           <DashboardCard 
@@ -34,6 +37,7 @@ const Admin = () => {
             icon={<Users className="h-8 w-8" />}
             description="View and manage user accounts"
             actionText="Manage Users"
+            onClick={() => {/* Future functionality */}}
           />
           
           <DashboardCard 
@@ -41,6 +45,7 @@ const Admin = () => {
             icon={<PenLine className="h-8 w-8" />}
             description="Write new articles and content"
             actionText="New Article"
+            onClick={() => navigate('/admin/new-article')}
           />
           
           <DashboardCard 
@@ -48,6 +53,7 @@ const Admin = () => {
             icon={<Settings className="h-8 w-8" />}
             description="Configure global site settings"
             actionText="Settings"
+            onClick={() => {/* Future functionality */}}
           />
         </div>
       </main>
@@ -62,9 +68,10 @@ interface DashboardCardProps {
   icon: React.ReactNode;
   description: string;
   actionText: string;
+  onClick?: () => void;
 }
 
-const DashboardCard = ({ title, icon, description, actionText }: DashboardCardProps) => {
+const DashboardCard = ({ title, icon, description, actionText, onClick }: DashboardCardProps) => {
   return (
     <div className="bg-white rounded-lg shadow-sm border p-6 flex flex-col">
       <div className="mb-4 text-primary">
@@ -72,7 +79,7 @@ const DashboardCard = ({ title, icon, description, actionText }: DashboardCardPr
       </div>
       <h2 className="text-xl font-bold mb-2">{title}</h2>
       <p className="text-gray-600 mb-6 flex-grow">{description}</p>
-      <Button className="w-full">{actionText}</Button>
+      <Button className="w-full" onClick={onClick}>{actionText}</Button>
     </div>
   );
 };

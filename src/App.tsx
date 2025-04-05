@@ -12,6 +12,7 @@ import Author from "./pages/Author";
 import NotFound from "./pages/NotFound";
 import SignIn from "./pages/SignIn";
 import Admin from "./pages/Admin";
+import ArticleEditor from "./pages/ArticleEditor";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,11 @@ const App = () => (
             <Route path="/admin" element={
               <AdminRoute>
                 <Admin />
+              </AdminRoute>
+            } />
+            <Route path="/admin/new-article" element={
+              <AdminRoute>
+                <ArticleEditor />
               </AdminRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
