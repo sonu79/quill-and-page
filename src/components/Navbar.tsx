@@ -1,12 +1,12 @@
 
 import { Link } from 'react-router-dom';
-import { Search, User, LogOut } from 'lucide-react';
+import { Search, User, LogOut, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 const Navbar = () => {
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, isAdmin, user, logout } = useAuth();
 
   const handleLogout = () => {
     logout();
@@ -36,6 +36,20 @@ const Navbar = () => {
           {isAuthenticated ? (
             <div className="flex items-center gap-4">
               <span className="text-sm hidden md:inline">Hello, {user?.name}</span>
+              
+              {isAdmin && (
+                <Link to="/admin">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="rounded-full flex items-center gap-2"
+                  >
+                    <Shield className="h-4 w-4" />
+                    <span className="hidden md:inline">Admin</span>
+                  </Button>
+                </Link>
+              )}
+              
               <Button 
                 onClick={handleLogout} 
                 size="sm" 

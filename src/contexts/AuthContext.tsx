@@ -5,11 +5,13 @@ interface User {
   id: string;
   email: string;
   name: string;
+  isAdmin?: boolean;
 }
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   login: (userData: User) => void;
   logout: () => void;
 }
@@ -17,6 +19,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   isAuthenticated: false,
+  isAdmin: false,
   login: () => {},
   logout: () => {},
 });
@@ -26,6 +29,7 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
   useEffect(() => {
     // Check if user is already logged in on component mount
@@ -34,8 +38,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     if (storedUser && storedAuthStatus === 'true') {
       try {
-        setUser(JSON.parse(storedUser));
+        const userData = JSON.parse(storedUser);
+        setUser(userData);
         setIsAuthenticated(true);
+        setIsAdmin(!!userData.isAdmin);
       } catch (error) {
         // Invalid stored user data
         localStorage.removeItem('user');
@@ -47,6 +53,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = (userData: User) => {
     setUser(userData);
     setIsAuthenticated(true);
+    setIsAdmin(!!userData.isAdmin);
     localStorage.setItem('user', JSON.stringify(userData));
     localStorage.setItem('isAuthenticated', 'true');
   };
@@ -54,12 +61,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
+    setIsAdmin(false);
     localStorage.removeItem('user');
     localStorage.removeItem('isAuthenticated');
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, isAdmin, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

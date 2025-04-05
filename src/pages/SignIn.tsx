@@ -13,6 +13,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Define the form schema
 const formSchema = z.object({
@@ -26,6 +27,7 @@ type FormValues = z.infer<typeof formSchema>;
 const SignIn = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -41,29 +43,41 @@ const SignIn = () => {
       setIsLoading(true);
       
       // This is just a mock authentication for now
-      // In a real app, this would call an API or auth service
       console.log('Sign in attempt:', values);
       
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Mock authentication success
+      // Mock authentication - regular user
       if (values.email === 'test@example.com' && values.password === 'password123') {
-        // Store user data in localStorage for persistent session
         const userData = {
           id: '1',
           email: values.email,
           name: 'Test User'
         };
         
-        localStorage.setItem('user', JSON.stringify(userData));
-        localStorage.setItem('isAuthenticated', 'true');
-        
+        login(userData);
         toast.success('Successfully signed in!');
         navigate('/');
-      } else {
-        toast.error('Invalid email or password');
+        return;
       }
+      
+      // Mock authentication - admin user
+      if (values.email === 'admin@example.com' && values.password === 'admin123') {
+        const adminData = {
+          id: '2',
+          email: values.email,
+          name: 'Admin User',
+          isAdmin: true
+        };
+        
+        login(adminData);
+        toast.success('Successfully signed in as admin!');
+        navigate('/admin');
+        return;
+      }
+      
+      toast.error('Invalid email or password');
     } catch (error) {
       console.error('Sign in error:', error);
       toast.error('Something went wrong. Please try again.');
@@ -151,6 +165,12 @@ const SignIn = () => {
                   Sign up
                 </Link>
               </p>
+            </div>
+            
+            <div className="mt-6 pt-6 border-t text-xs text-gray-500">
+              <p>Test accounts:</p>
+              <p>Regular user: test@example.com / password123</p>
+              <p>Admin user: admin@example.com / admin123</p>
             </div>
           </div>
         </div>
