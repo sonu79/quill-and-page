@@ -29,7 +29,7 @@ const Admin = () => {
             icon={<FileText className="h-8 w-8" />}
             description="Create, edit, and manage all articles"
             actionText="Manage Articles"
-            onClick={() => {/* Future functionality */}}
+            onClick={() => navigate('/admin/manage-articles')}
           />
           
           <DashboardCard 

@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -9,12 +9,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, Save } from 'lucide-react';
 import { toast } from 'sonner';
-import { articles } from '@/data/articles';
+import { articles, getArticleBySlug } from '@/data/articles';
 import { useAuth } from '@/contexts/AuthContext';
 
 const ArticleEditor = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { id } = useParams<{ id: string }>();
   
   const [article, setArticle] = useState({
     title: '',
@@ -25,6 +26,26 @@ const ArticleEditor = () => {
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isEditMode = !!id;
+  
+  useEffect(() => {
+    // If in edit mode, fetch the article data
+    if (isEditMode) {
+      const existingArticle = articles.find(article => article.id === id);
+      if (existingArticle) {
+        setArticle({
+          title: existingArticle.title,
+          subtitle: existingArticle.subtitle,
+          content: existingArticle.content,
+          imageUrl: existingArticle.imageUrl,
+          featured: existingArticle.featured || false
+        });
+      } else {
+        toast.error('Article not found');
+        navigate('/admin/manage-articles');
+      }
+    }
+  }, [id, isEditMode, navigate]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -49,29 +70,33 @@ const ArticleEditor = () => {
     
     try {
       // In a real app, this would be an API call
-      // For demo purposes, we're just simulating the creation
-      const newArticle = {
-        id: String(articles.length + 1),
-        authorId: user?.id || '1',
-        publishedDate: new Date().toISOString().split('T')[0],
-        readTime: Math.ceil(article.content.split(' ').length / 200), // Rough estimate
-        slug: article.title.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-'),
-        ...article
-      };
-      
-      console.log('Created new article:', newArticle);
-      
-      // Show success message
-      toast.success('Article published successfully!');
+      if (isEditMode) {
+        // Update existing article
+        toast.success('Article updated successfully!');
+        console.log('Updated article:', { ...article, id });
+      } else {
+        // Create new article
+        const newArticle = {
+          id: String(articles.length + 1),
+          authorId: user?.id || '1',
+          publishedDate: new Date().toISOString().split('T')[0],
+          readTime: Math.ceil(article.content.split(' ').length / 200), // Rough estimate
+          slug: article.title.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-'),
+          ...article
+        };
+        
+        console.log('Created new article:', newArticle);
+        toast.success('Article published successfully!');
+      }
       
       // Navigate back to admin page after short delay
       setTimeout(() => {
-        navigate('/admin');
+        navigate('/admin/manage-articles');
       }, 1500);
       
     } catch (error) {
       console.error('Error publishing article:', error);
-      toast.error('Failed to publish article. Please try again.');
+      toast.error(`Failed to ${isEditMode ? 'update' : 'publish'} article. Please try again.`);
     } finally {
       setIsSubmitting(false);
     }
@@ -87,14 +112,20 @@ const ArticleEditor = () => {
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={() => navigate('/admin')}
+              onClick={() => navigate('/admin/manage-articles')}
               className="mb-2"
             >
-              <ArrowLeft className="h-4 w-4 mr-1" /> Back to Admin
+              <ArrowLeft className="h-4 w-4 mr-1" /> Back to Articles
             </Button>
           </div>
-          <h1 className="text-3xl font-bold mb-2">Create New Article</h1>
-          <p className="text-gray-600">Fill in the details below to publish a new article</p>
+          <h1 className="text-3xl font-bold mb-2">
+            {isEditMode ? 'Edit Article' : 'Create New Article'}
+          </h1>
+          <p className="text-gray-600">
+            {isEditMode 
+              ? 'Update the article details below' 
+              : 'Fill in the details below to publish a new article'}
+          </p>
         </div>
       </div>
       
@@ -186,12 +217,13 @@ const ArticleEditor = () => {
               className="gap-2"
             >
               <Save className="h-4 w-4" />
-              {isSubmitting ? 'Publishing...' : 'Publish Article'}
+              {isSubmitting ? (isEditMode ? 'Updating...' : 'Publishing...') : 
+                              (isEditMode ? 'Update Article' : 'Publish Article')}
             </Button>
             <Button 
               type="button"
               variant="outline"
-              onClick={() => navigate('/admin')}
+              onClick={() => navigate('/admin/manage-articles')}
             >
               Cancel
             </Button>

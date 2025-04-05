@@ -13,6 +13,7 @@ import NotFound from "./pages/NotFound";
 import SignIn from "./pages/SignIn";
 import Admin from "./pages/Admin";
 import ArticleEditor from "./pages/ArticleEditor";
+import ManageArticles from "./pages/ManageArticles";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,16 @@ const App = () => (
             <Route path="/admin/new-article" element={
               <AdminRoute>
                 <ArticleEditor />
+              </AdminRoute>
+            } />
+            <Route path="/admin/edit-article/:id" element={
+              <AdminRoute>
+                <ArticleEditor />
+              </AdminRoute>
+            } />
+            <Route path="/admin/manage-articles" element={
+              <AdminRoute>
+                <ManageArticles />
               </AdminRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
