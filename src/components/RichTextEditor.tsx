@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Label } from '@/components/ui/label';
@@ -17,7 +16,7 @@ import {
   Link as LinkIcon,
   X,
   Code,
-  Embed
+  CodepenIcon
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
@@ -50,7 +49,6 @@ const RichTextEditor = ({ name, label, description }: RichTextEditorProps) => {
   const [toolbarPosition, setToolbarPosition] = useState({ top: 0, left: 0 });
   const [selectedFormat, setSelectedFormat] = useState<string | null>(null);
   
-  // Handle selection changes to show/hide the toolbar
   useEffect(() => {
     const checkSelection = () => {
       const selection = window.getSelection();
@@ -59,23 +57,19 @@ const RichTextEditor = ({ name, label, description }: RichTextEditorProps) => {
         return;
       }
 
-      // Don't show toolbar when selecting within the toolbar itself
       if (toolbarRef.current && toolbarRef.current.contains(selection.anchorNode as Node)) {
         return;
       }
 
-      // Only show toolbar for selections within our editor
       if (editorRef.current && editorRef.current.contains(selection.anchorNode as Node)) {
         setShowToolbar(true);
         
-        // Position the toolbar above the selection
         const range = selection.getRangeAt(0);
         const rect = range.getBoundingClientRect();
         const editorRect = editorRef.current.getBoundingClientRect();
         
-        // Calculate position relative to the editor
-        const top = rect.top - editorRect.top - 50; // 50px above the selection
-        const left = rect.left + (rect.width / 2) - editorRect.left - 100; // Center the toolbar
+        const top = rect.top - editorRect.top - 50;
+        const left = rect.left + (rect.width / 2) - editorRect.left - 100;
         
         setToolbarPosition({ top, left: Math.max(0, left) });
       }
@@ -96,17 +90,14 @@ const RichTextEditor = ({ name, label, description }: RichTextEditorProps) => {
     
     setSelectedFormat(format);
     
-    // Save selection
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) return;
     
     const range = selection.getRangeAt(0);
     let selectedText = range.toString();
     
-    // Skip if nothing is selected and not inserting a block element
-    if (!selectedText && !['h1', 'h2', 'p', 'blockquote', 'ul', 'ol', 'code', 'embed'].includes(format)) return;
+    if (!selectedText && !['h1', 'h2', 'p', 'blockquote', 'ul', 'ol', 'code'].includes(format)) return;
     
-    // Apply formatting
     let formattedText = '';
     switch (format) {
       case 'bold':
@@ -158,7 +149,6 @@ const RichTextEditor = ({ name, label, description }: RichTextEditorProps) => {
         formattedText = selectedText;
     }
     
-    // Insert the formatted text
     if (formattedText) {
       const textarea = document.querySelector(`textarea[name="${name}"]`) as HTMLTextAreaElement;
       if (textarea) {
@@ -171,13 +161,11 @@ const RichTextEditor = ({ name, label, description }: RichTextEditorProps) => {
         
         setValue(name, newContent);
         
-        // Set cursor position after the inserted text
         setTimeout(() => {
           textarea.focus();
           const newPosition = start + formattedText.length;
           textarea.setSelectionRange(newPosition, newPosition);
           
-          // Hide toolbar after applying formatting
           setShowToolbar(false);
         }, 0);
       }
@@ -190,7 +178,6 @@ const RichTextEditor = ({ name, label, description }: RichTextEditorProps) => {
         {label && <Label htmlFor={name} className="sr-only">{label}</Label>}
         
         <div className="border rounded-lg bg-white shadow-sm">
-          {/* Floating formatting toolbar - Medium-like selection toolbar */}
           {showToolbar && (
             <div 
               ref={toolbarRef}
@@ -299,9 +286,7 @@ const RichTextEditor = ({ name, label, description }: RichTextEditorProps) => {
             </div>
           )}
 
-          {/* Plus button toolbar that appears when typing new lines */}
           <div className="py-6 px-6 relative">
-            {/* Title field styled like Medium */}
             <textarea 
               placeholder="Title"
               className="w-full text-4xl font-serif leading-tight mb-4 p-0 border-none bg-transparent outline-none resize-none placeholder:text-gray-300 placeholder:opacity-80 font-bold"
@@ -309,7 +294,6 @@ const RichTextEditor = ({ name, label, description }: RichTextEditorProps) => {
               {...register('title')}
             ></textarea>
 
-            {/* Subtitle field styled like Medium */}
             <textarea 
               placeholder="Subtitle"
               className="w-full text-xl font-serif leading-tight mb-8 p-0 border-none bg-transparent outline-none resize-none placeholder:text-gray-300 placeholder:opacity-80 text-gray-500"
@@ -317,7 +301,6 @@ const RichTextEditor = ({ name, label, description }: RichTextEditorProps) => {
               {...register('subtitle')}
             ></textarea>
 
-            {/* Main article content */}
             <div ref={editorRef} className="relative min-h-[400px]">
               <textarea
                 {...register(name)}
@@ -329,7 +312,6 @@ const RichTextEditor = ({ name, label, description }: RichTextEditorProps) => {
           </div>
         </div>
         
-        {/* Side formatting toolbar - Enhanced with new options */}
         <div className="fixed left-4 top-1/3 bg-white rounded-full shadow-lg border border-gray-200 p-1 flex flex-col gap-1">
           <Tooltip>
             <TooltipTrigger asChild>
@@ -411,7 +393,6 @@ const RichTextEditor = ({ name, label, description }: RichTextEditorProps) => {
             </TooltipContent>
           </Tooltip>
           
-          {/* New Code Block Button */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button 
@@ -428,7 +409,6 @@ const RichTextEditor = ({ name, label, description }: RichTextEditorProps) => {
             </TooltipContent>
           </Tooltip>
           
-          {/* New Embed Button */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button 
@@ -437,7 +417,7 @@ const RichTextEditor = ({ name, label, description }: RichTextEditorProps) => {
                 onClick={() => handleFormat('embed')}
                 type="button"
               >
-                <Embed className="h-4 w-4" />
+                <CodepenIcon className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="right">
@@ -450,7 +430,6 @@ const RichTextEditor = ({ name, label, description }: RichTextEditorProps) => {
           <p className="text-sm text-gray-500">{description}</p>
         )}
         
-        {/* Preview section */}
         <div className="mt-8 p-5 border rounded-lg bg-gray-50">
           <h4 className="font-medium mb-3 text-gray-700 flex items-center gap-2">
             <ImageIcon className="h-4 w-4" /> Preview
