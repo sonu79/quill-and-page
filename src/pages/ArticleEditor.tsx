@@ -5,10 +5,7 @@ import { useForm, FormProvider } from 'react-hook-form';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Form, FormField, FormItem, FormLabel, FormControl } from '@/components/ui/form';
-import { ArrowLeft, Save, FileText } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { articles, getArticleBySlug } from '@/data/articles';
 import { useAuth } from '@/contexts/AuthContext';
@@ -97,119 +94,62 @@ const ArticleEditor = () => {
   };
   
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      
-      <div className="bg-slate-100 py-8">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center gap-2">
+    <div className="min-h-screen flex flex-col bg-white">
+      <header className="border-b sticky top-0 z-10 bg-white">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
             <Button 
               variant="ghost" 
               size="sm" 
               onClick={() => navigate('/admin/manage-articles')}
-              className="mb-2"
+              className="text-gray-500"
             >
-              <ArrowLeft className="h-4 w-4 mr-1" /> Back to Articles
+              <ArrowLeft className="h-4 w-4 mr-1" /> 
             </Button>
+            <span className="font-serif font-bold text-lg">
+              {isEditMode ? 'Edit Article' : 'Draft'}
+            </span>
+            <span className="text-gray-500 text-sm">
+              in {user?.name || 'Your'} Blog
+            </span>
           </div>
-          <h1 className="text-3xl font-bold mb-2">
-            {isEditMode ? 'Edit Article' : 'Create New Article'}
-          </h1>
-          <p className="text-gray-600">
-            {isEditMode 
-              ? 'Update the article details below' 
-              : 'Fill in the details below to publish a new article'}
-          </p>
+          
+          <div>
+            <FormProvider {...methods}>
+              <form onSubmit={methods.handleSubmit(onSubmit)} className="flex items-center">
+                <div className="mr-2">
+                  <input
+                    type="checkbox"
+                    id="featured"
+                    {...methods.register('featured')}
+                    className="mr-1"
+                  />
+                  <label htmlFor="featured" className="text-sm text-gray-600">Featured</label>
+                </div>
+                
+                <Button 
+                  type="submit" 
+                  disabled={isSubmitting}
+                  className="gap-2 bg-green-500 hover:bg-green-600 text-white rounded-full px-6"
+                >
+                  {isSubmitting ? (isEditMode ? 'Saving...' : 'Publishing...') : 
+                                (isEditMode ? 'Save' : 'Publish')}
+                </Button>
+              </form>
+            </FormProvider>
+          </div>
         </div>
-      </div>
+      </header>
       
-      <main className="flex-grow container mx-auto px-4 py-8">
+      <main className="flex-grow container mx-auto px-4 py-6 max-w-5xl">
         <FormProvider {...methods}>
-          <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6 max-w-4xl">
-            <div className="grid gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="title">Title *</Label>
-                <Input 
-                  id="title"
-                  {...methods.register('title', { required: true })}
-                  placeholder="Enter article title"
-                  className="text-lg"
-                />
-                {methods.formState.errors.title && (
-                  <p className="text-red-500 text-sm">Title is required</p>
-                )}
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="subtitle">Subtitle *</Label>
-                <Input 
-                  id="subtitle"
-                  {...methods.register('subtitle', { required: true })}
-                  placeholder="Enter article subtitle"
-                />
-                {methods.formState.errors.subtitle && (
-                  <p className="text-red-500 text-sm">Subtitle is required</p>
-                )}
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="imageUrl">Cover Image URL</Label>
-                <Input 
-                  id="imageUrl"
-                  {...methods.register('imageUrl')}
-                  placeholder="https://example.com/image.jpg"
-                />
-                {methods.watch('imageUrl') && (
-                  <div className="mt-2 aspect-video w-full max-w-md overflow-hidden rounded-lg bg-slate-100">
-                    <img 
-                      src={methods.watch('imageUrl')} 
-                      alt="Article cover preview" 
-                      className="h-full w-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0";
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
-              
-              <RichTextEditor 
-                name="content" 
-                label="Article Content *"
-                description="Use the toolbar above to format your content"
-              />
-              
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="featured"
-                  {...methods.register('featured')}
-                  className="rounded border-gray-300"
-                />
-                <Label htmlFor="featured" className="cursor-pointer">Feature this article on homepage</Label>
-              </div>
-            </div>
-            
-            <div className="flex gap-4">
-              <Button 
-                type="submit" 
-                disabled={isSubmitting}
-                className="gap-2"
-              >
-                <Save className="h-4 w-4" />
-                {isSubmitting ? (isEditMode ? 'Updating...' : 'Publishing...') : 
-                              (isEditMode ? 'Update Article' : 'Publish Article')}
-              </Button>
-              <Button 
-                type="button"
-                variant="outline"
-                onClick={() => navigate('/admin/manage-articles')}
-              >
-                Cancel
-              </Button>
-            </div>
-          </form>
+          <RichTextEditor 
+            name="content" 
+            description="Write your story..."
+          />
+          
+          {/* Hidden input for imageUrl since it's not directly exposed in the UI */}
+          <input type="hidden" {...methods.register('imageUrl')} />
         </FormProvider>
       </main>
       
