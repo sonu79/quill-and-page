@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Label } from '@/components/ui/label';
@@ -16,7 +17,8 @@ import {
   Link as LinkIcon,
   X,
   Code,
-  CodepenIcon
+  CodepenIcon,
+  Type
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
@@ -326,6 +328,70 @@ const RichTextEditor = ({ name, label, description }: RichTextEditorProps) => {
             </TooltipTrigger>
             <TooltipContent side="right">
               Add paragraph
+            </TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => handleFormat('h1')}
+                type="button"
+              >
+                <Heading1 className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              Add heading
+            </TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => handleFormat('h2')}
+                type="button"
+              >
+                <Heading2 className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              Add subheading
+            </TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => handleFormat('italic')}
+                type="button"
+              >
+                <Italic className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              Italic text
+            </TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => handleFormat('link')}
+                type="button"
+              >
+                <LinkIcon className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              Add link
             </TooltipContent>
           </Tooltip>
           
