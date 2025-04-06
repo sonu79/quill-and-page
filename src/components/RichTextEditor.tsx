@@ -15,8 +15,22 @@ import {
   Pilcrow,
   ImageIcon,
   Link as LinkIcon,
-  X
+  X,
+  Code,
+  Embed
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface RichTextEditorProps {
   name: string;
@@ -27,6 +41,9 @@ interface RichTextEditorProps {
 const RichTextEditor = ({ name, label, description }: RichTextEditorProps) => {
   const { register, setValue, watch } = useFormContext();
   const content = watch(name) || '';
+  const titleValue = watch('title') || '';
+  const subtitleValue = watch('subtitle') || '';
+  
   const editorRef = useRef<HTMLDivElement>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
   const [showToolbar, setShowToolbar] = useState(false);
@@ -87,7 +104,7 @@ const RichTextEditor = ({ name, label, description }: RichTextEditorProps) => {
     let selectedText = range.toString();
     
     // Skip if nothing is selected and not inserting a block element
-    if (!selectedText && !['h1', 'h2', 'p', 'blockquote', 'ul', 'ol'].includes(format)) return;
+    if (!selectedText && !['h1', 'h2', 'p', 'blockquote', 'ul', 'ol', 'code', 'embed'].includes(format)) return;
     
     // Apply formatting
     let formattedText = '';
@@ -128,6 +145,15 @@ const RichTextEditor = ({ name, label, description }: RichTextEditorProps) => {
           formattedText = `\n<figure>\n  <img src="${imageUrl}" alt="Image" />\n  <figcaption>Image caption</figcaption>\n</figure>\n`;
         }
         break;
+      case 'code':
+        formattedText = `\n<pre><code>${selectedText || 'Enter code here'}</code></pre>\n`;
+        break;
+      case 'embed':
+        const embedUrl = prompt('Enter embed URL (YouTube, Twitter, etc):');
+        if (embedUrl) {
+          formattedText = `\n<div class="embed-container">\n  <iframe src="${embedUrl}" frameborder="0" allowfullscreen></iframe>\n</div>\n`;
+        }
+        break;
       default:
         formattedText = selectedText;
     }
@@ -159,177 +185,284 @@ const RichTextEditor = ({ name, label, description }: RichTextEditorProps) => {
   };
 
   return (
-    <div className="space-y-4 w-full max-w-4xl mx-auto">
-      {label && <Label htmlFor={name} className="sr-only">{label}</Label>}
-      
-      <div className="border rounded-lg bg-white shadow-sm">
-        {/* Floating formatting toolbar */}
-        {showToolbar && (
-          <div 
-            ref={toolbarRef}
-            className="absolute z-10 bg-white rounded-md shadow-lg border border-gray-200 flex items-center p-1 transition-all duration-200 ease-in-out"
-            style={{ 
-              top: `${toolbarPosition.top}px`, 
-              left: `${toolbarPosition.left}px`,
-            }}
-          >
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => handleFormat('bold')}
-              className={selectedFormat === 'bold' ? 'bg-gray-100' : ''}
-              type="button"
-              title="Bold"
+    <TooltipProvider>
+      <div className="space-y-4 w-full max-w-4xl mx-auto">
+        {label && <Label htmlFor={name} className="sr-only">{label}</Label>}
+        
+        <div className="border rounded-lg bg-white shadow-sm">
+          {/* Floating formatting toolbar - Medium-like selection toolbar */}
+          {showToolbar && (
+            <div 
+              ref={toolbarRef}
+              className="absolute z-10 bg-[#242424] rounded-md shadow-lg border border-gray-700 flex items-center p-1 transition-all duration-200 ease-in-out"
+              style={{ 
+                top: `${toolbarPosition.top}px`, 
+                left: `${toolbarPosition.left}px`,
+              }}
             >
-              <Bold className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => handleFormat('italic')}
-              className={selectedFormat === 'italic' ? 'bg-gray-100' : ''}
-              type="button"
-              title="Italic"
-            >
-              <Italic className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => handleFormat('h1')}
-              className={selectedFormat === 'h1' ? 'bg-gray-100' : ''}
-              type="button"
-              title="Heading 1"
-            >
-              <Heading1 className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => handleFormat('h2')}
-              className={selectedFormat === 'h2' ? 'bg-gray-100' : ''}
-              type="button"
-              title="Heading 2"
-            >
-              <Heading2 className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => handleFormat('link')}
-              className={selectedFormat === 'link' ? 'bg-gray-100' : ''}
-              type="button"
-              title="Add Link"
-            >
-              <LinkIcon className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => setShowToolbar(false)}
-              type="button"
-              title="Close"
-              className="ml-1"
-            >
-              <X className="h-3 w-3" />
-            </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => handleFormat('bold')}
+                className={`text-white hover:bg-gray-700 ${selectedFormat === 'bold' ? 'bg-gray-700' : ''}`}
+                type="button"
+                title="Bold"
+              >
+                <Bold className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => handleFormat('italic')}
+                className={`text-white hover:bg-gray-700 ${selectedFormat === 'italic' ? 'bg-gray-700' : ''}`}
+                type="button"
+                title="Italic"
+              >
+                <Italic className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => handleFormat('link')}
+                className={`text-white hover:bg-gray-700 ${selectedFormat === 'link' ? 'bg-gray-700' : ''}`}
+                type="button"
+                title="Add Link"
+              >
+                <LinkIcon className="h-4 w-4" />
+              </Button>
+              
+              <Separator orientation="vertical" className="mx-1 h-6 bg-gray-600" />
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="text-white hover:bg-gray-700"
+                    type="button"
+                  >
+                    <Heading1 className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => handleFormat('h1')}>
+                    Heading 1
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleFormat('h2')}>
+                    Heading 2
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => handleFormat('blockquote')}
+                className={`text-white hover:bg-gray-700 ${selectedFormat === 'blockquote' ? 'bg-gray-700' : ''}`}
+                type="button"
+                title="Quote"
+              >
+                <Quote className="h-4 w-4" />
+              </Button>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="text-white hover:bg-gray-700"
+                    type="button"
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => handleFormat('ul')}>
+                    Bullet List
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleFormat('ol')}>
+                    Numbered List
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowToolbar(false)}
+                type="button"
+                title="Close"
+                className="ml-1 text-white hover:bg-gray-700"
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          )}
+
+          {/* Plus button toolbar that appears when typing new lines */}
+          <div className="py-6 px-6 relative">
+            {/* Title field styled like Medium */}
+            <textarea 
+              placeholder="Title"
+              className="w-full text-4xl font-serif leading-tight mb-4 p-0 border-none bg-transparent outline-none resize-none placeholder:text-gray-300 placeholder:opacity-80 font-bold"
+              style={{ height: '60px' }}
+              {...register('title')}
+            ></textarea>
+
+            {/* Subtitle field styled like Medium */}
+            <textarea 
+              placeholder="Subtitle"
+              className="w-full text-xl font-serif leading-tight mb-8 p-0 border-none bg-transparent outline-none resize-none placeholder:text-gray-300 placeholder:opacity-80 text-gray-500"
+              style={{ height: '40px' }}
+              {...register('subtitle')}
+            ></textarea>
+
+            {/* Main article content */}
+            <div ref={editorRef} className="relative min-h-[400px]">
+              <textarea
+                {...register(name)}
+                id={name}
+                placeholder="Tell your story..."
+                className="w-full min-h-[400px] p-0 outline-none resize-none border-none bg-transparent font-serif text-lg leading-relaxed"
+              />
+            </div>
           </div>
+        </div>
+        
+        {/* Side formatting toolbar - Enhanced with new options */}
+        <div className="fixed left-4 top-1/3 bg-white rounded-full shadow-lg border border-gray-200 p-1 flex flex-col gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => handleFormat('p')}
+                type="button"
+              >
+                <Pilcrow className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              Add paragraph
+            </TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => handleFormat('image')}
+                type="button"
+              >
+                <ImageIcon className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              Add image
+            </TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => handleFormat('blockquote')}
+                type="button"
+              >
+                <Quote className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              Add quote
+            </TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => handleFormat('ul')}
+                type="button"
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              Add bullet list
+            </TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => handleFormat('ol')}
+                type="button"
+              >
+                <ListOrdered className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              Add numbered list
+            </TooltipContent>
+          </Tooltip>
+          
+          {/* New Code Block Button */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => handleFormat('code')}
+                type="button"
+              >
+                <Code className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              Add code block
+            </TooltipContent>
+          </Tooltip>
+          
+          {/* New Embed Button */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => handleFormat('embed')}
+                type="button"
+              >
+                <Embed className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              Add embed (videos, tweets, etc)
+            </TooltipContent>
+          </Tooltip>
+        </div>
+        
+        {description && (
+          <p className="text-sm text-gray-500">{description}</p>
         )}
-
-        {/* Plus button toolbar that appears when typing new lines */}
-        <div className="py-6 px-6 relative">
-          {/* Title field styled like Medium */}
-          <textarea 
-            placeholder="Title"
-            className="w-full text-4xl font-serif leading-tight mb-4 p-0 border-none bg-transparent outline-none resize-none placeholder:text-gray-300 placeholder:opacity-80 font-bold"
-            style={{ height: '60px' }}
-            {...register('title')}
-          ></textarea>
-
-          {/* Subtitle field styled like Medium */}
-          <textarea 
-            placeholder="Subtitle"
-            className="w-full text-xl font-serif leading-tight mb-8 p-0 border-none bg-transparent outline-none resize-none placeholder:text-gray-300 placeholder:opacity-80 text-gray-500"
-            style={{ height: '40px' }}
-            {...register('subtitle')}
-          ></textarea>
-
-          {/* Main article content */}
-          <div ref={editorRef} className="relative min-h-[400px]">
-            <textarea
-              {...register(name)}
-              id={name}
-              placeholder="Tell your story..."
-              className="w-full min-h-[400px] p-0 outline-none resize-none border-none bg-transparent font-serif text-lg leading-relaxed"
-            />
+        
+        {/* Preview section */}
+        <div className="mt-8 p-5 border rounded-lg bg-gray-50">
+          <h4 className="font-medium mb-3 text-gray-700 flex items-center gap-2">
+            <ImageIcon className="h-4 w-4" /> Preview
+          </h4>
+          <div className="prose max-w-none font-serif">
+            {titleValue && <h1 className="text-4xl mb-2">{titleValue}</h1>}
+            {subtitleValue && <p className="text-xl text-gray-500 mb-6">{subtitleValue}</p>}
+            <div dangerouslySetInnerHTML={{ __html: content }} />
           </div>
         </div>
       </div>
-      
-      {/* Side formatting toolbar */}
-      <div className="fixed left-4 top-1/3 bg-white rounded-full shadow-lg border border-gray-200 p-1 flex flex-col gap-1">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => handleFormat('p')}
-          type="button"
-          title="Paragraph"
-        >
-          <Pilcrow className="h-4 w-4" />
-        </Button>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => handleFormat('image')}
-          type="button"
-          title="Add Image"
-        >
-          <ImageIcon className="h-4 w-4" />
-        </Button>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => handleFormat('blockquote')}
-          type="button"
-          title="Quote"
-        >
-          <Quote className="h-4 w-4" />
-        </Button>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => handleFormat('ul')}
-          type="button"
-          title="Bullet List"
-        >
-          <List className="h-4 w-4" />
-        </Button>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => handleFormat('ol')}
-          type="button"
-          title="Numbered List"
-        >
-          <ListOrdered className="h-4 w-4" />
-        </Button>
-      </div>
-      
-      {description && (
-        <p className="text-sm text-gray-500">{description}</p>
-      )}
-      
-      {/* Preview section */}
-      <div className="mt-8 p-5 border rounded-lg bg-gray-50">
-        <h4 className="font-medium mb-3 text-gray-700 flex items-center gap-2">
-          <ImageIcon className="h-4 w-4" /> Preview
-        </h4>
-        <div 
-          className="prose max-w-none font-serif"
-          dangerouslySetInnerHTML={{ __html: content }}
-        />
-      </div>
-    </div>
+    </TooltipProvider>
   );
 };
 
