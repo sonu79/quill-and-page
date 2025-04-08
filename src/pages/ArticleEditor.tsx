@@ -6,12 +6,11 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Save } from 'lucide-react';
 import { toast } from 'sonner';
-import { articles, getArticleBySlug } from '@/data/articles';
 import { useAuth } from '@/contexts/AuthContext';
 import RichTextEditor from '@/components/RichTextEditor';
-import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { createArticle, fetchArticleBySlug, updateArticle, SupabaseArticle } from '@/services/articleService';
 
 interface ArticleFormValues {
   title: string;
@@ -30,6 +29,7 @@ const ArticleEditor = () => {
   const [autoSave, setAutoSave] = useState(true);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [draftSaving, setDraftSaving] = useState(false);
+  const [existingArticle, setExistingArticle] = useState<SupabaseArticle | null>(null);
   const isEditMode = !!id;
   
   const methods = useForm<ArticleFormValues>({
@@ -47,20 +47,32 @@ const ArticleEditor = () => {
   
   // Initialize form with data if in edit mode
   useEffect(() => {
-    if (isEditMode) {
-      const existingArticle = articles.find(article => article.id === id);
-      if (existingArticle) {
-        methods.reset({
-          title: existingArticle.title,
-          subtitle: existingArticle.subtitle,
-          content: existingArticle.content,
-          imageUrl: existingArticle.imageUrl,
-          featured: existingArticle.featured || false
-        });
-      } else {
-        toast.error('Article not found');
-        navigate('/admin/manage-articles');
-      }
+    if (isEditMode && id) {
+      // Load the article from Supabase
+      const loadArticle = async () => {
+        try {
+          const article = await fetchArticleBySlug(id);
+          if (article) {
+            setExistingArticle(article);
+            methods.reset({
+              title: article.title || '',
+              subtitle: article.excerpt || '',
+              content: article.content || '',
+              imageUrl: article.cover_image || 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0',
+              featured: article.is_featured || false
+            });
+          } else {
+            toast.error('Article not found');
+            navigate('/admin/manage-articles');
+          }
+        } catch (error) {
+          console.error('Error loading article:', error);
+          toast.error('Failed to load article');
+          navigate('/admin/manage-articles');
+        }
+      };
+      
+      loadArticle();
     }
     
     // Try to load draft from localStorage
@@ -135,27 +147,38 @@ const ArticleEditor = () => {
     }
   };
   
-  const onSubmit = (data: ArticleFormValues) => {
+  const onSubmit = async (data: ArticleFormValues) => {
+    if (!user?.id) {
+      toast.error('You must be logged in to publish an article');
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
-      // In a real app, this would be an API call
-      if (isEditMode) {
+      const articleData = {
+        title: data.title,
+        content: data.content,
+        excerpt: data.subtitle,
+        cover_image: data.imageUrl,
+        is_featured: data.featured,
+        is_published: true,
+        author_id: user.id,
+        slug: data.title.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-'),
+        published_at: new Date().toISOString(),
+        view_count: 0
+      };
+      
+      if (isEditMode && existingArticle) {
         // Update existing article
+        await updateArticle(existingArticle.id, {
+          ...articleData,
+          updated_at: new Date().toISOString()
+        });
         toast.success('Article updated successfully!');
-        console.log('Updated article:', { ...data, id });
       } else {
         // Create new article
-        const newArticle = {
-          id: String(articles.length + 1),
-          authorId: user?.id || '1',
-          publishedDate: new Date().toISOString().split('T')[0],
-          readTime: Math.ceil(data.content.split(' ').length / 200), // Rough estimate
-          slug: data.title.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-'),
-          ...data
-        };
-        
-        console.log('Created new article:', newArticle);
+        await createArticle(articleData);
         toast.success('Article published successfully!');
         
         // Clear draft after successful publish
