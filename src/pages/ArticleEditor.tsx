@@ -166,7 +166,10 @@ const ArticleEditor = () => {
         author_id: user.id,
         slug: data.title.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-'),
         published_at: new Date().toISOString(),
-        view_count: 0
+        view_count: 0,
+        // Adding the missing properties
+        category: null, // Set to null as it's nullable in the schema
+        tags: null      // Set to null as it's nullable in the schema
       };
       
       if (isEditMode && existingArticle) {
