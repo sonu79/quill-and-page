@@ -1,25 +1,61 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Pencil, Trash2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import { articles } from '@/data/articles';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
+import { fetchAllArticles, deleteArticle, SupabaseArticle } from '@/services/articleService';
+import { fetchProfiles } from '@/services/profileService';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/contexts/AuthContext';
 
 const ManageArticles = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { isAdmin } = useAuth();
+  
+  const { data: articles, isLoading } = useQuery({
+    queryKey: ['adminArticles'],
+    queryFn: fetchAllArticles,
+    enabled: isAdmin // Only fetch if user is admin
+  });
+
+  const { data: profiles } = useQuery({
+    queryKey: ['profiles'],
+    queryFn: fetchProfiles,
+    enabled: isAdmin // Only fetch if user is admin
+  });
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: deleteArticle,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminArticles'] });
+      toast.success('Article has been deleted.');
+    },
+    onError: (error) => {
+      toast.error(`Failed to delete article: ${error.message}`);
+    }
+  });
   
   const handleDelete = (id: string) => {
-    // In a real app, this would be an API call
-    // For demo purposes, we're just simulating the deletion
-    toast.success(`Article with ID ${id} has been deleted.`);
+    if (window.confirm('Are you sure you want to delete this article? This action cannot be undone.')) {
+      deleteMutation.mutate(id);
+    }
   };
   
   const handleEdit = (id: string) => {
     navigate(`/admin/edit-article/${id}`);
+  };
+  
+  const getAuthorName = (authorId: string | null) => {
+    if (!authorId || !profiles) return 'Unknown';
+    const profile = profiles.find(p => p.id === authorId);
+    return profile ? (profile.name || profile.username || 'Anonymous') : 'Unknown';
   };
   
   const formatDate = (dateString: string) => {
@@ -30,6 +66,22 @@ const ManageArticles = () => {
       day: 'numeric' 
     }).format(date);
   };
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
+            <p className="mb-4">You do not have permission to access this page.</p>
+            <Button onClick={() => navigate('/')}>Return to Home</Button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -61,47 +113,68 @@ const ManageArticles = () => {
         </div>
         
         <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Author</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Featured</TableHead>
-                <TableHead className="w-[100px]">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {articles.map((article) => (
-                <TableRow key={article.id}>
-                  <TableCell className="font-medium">{article.title}</TableCell>
-                  <TableCell>{article.authorId}</TableCell>
-                  <TableCell>{formatDate(article.publishedDate)}</TableCell>
-                  <TableCell>{article.featured ? "Yes" : "No"}</TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(article.id)}
-                        title="Edit article"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(article.id)}
-                        title="Delete article"
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          {isLoading ? (
+            <div className="p-4">
+              <Skeleton className="h-12 w-full mb-4" />
+              <Skeleton className="h-12 w-full mb-4" />
+              <Skeleton className="h-12 w-full mb-4" />
+              <Skeleton className="h-12 w-full mb-4" />
+              <Skeleton className="h-12 w-full" />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Author</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Published</TableHead>
+                  <TableHead>Featured</TableHead>
+                  <TableHead className="w-[100px]">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {articles && articles.length > 0 ? (
+                  articles.map((article: SupabaseArticle) => (
+                    <TableRow key={article.id}>
+                      <TableCell className="font-medium">{article.title}</TableCell>
+                      <TableCell>{getAuthorName(article.author_id)}</TableCell>
+                      <TableCell>{formatDate(article.created_at)}</TableCell>
+                      <TableCell>{article.is_published ? "Yes" : "No"}</TableCell>
+                      <TableCell>{article.is_featured ? "Yes" : "No"}</TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(article.id)}
+                            title="Edit article"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(article.id)}
+                            title="Delete article"
+                            disabled={deleteMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-6">
+                      No articles found. Create your first article by clicking "New Article".
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
         </div>
       </main>
       
