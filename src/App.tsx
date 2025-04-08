@@ -15,6 +15,7 @@ import SignUp from "./pages/SignUp";
 import Admin from "./pages/Admin";
 import ArticleEditor from "./pages/ArticleEditor";
 import ManageArticles from "./pages/ManageArticles";
+import CreateAdmin from "./pages/CreateAdmin";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/author/:id" element={<Author />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
+            <Route path="/create-admin" element={<CreateAdmin />} />
             <Route path="/admin" element={
               <AdminRoute>
                 <Admin />
