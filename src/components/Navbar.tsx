@@ -65,7 +65,9 @@ const Navbar = () => {
               <Link to="/signin">
                 <Button size="sm" variant="outline" className="rounded-full">Sign In</Button>
               </Link>
-              <Button size="sm" className="rounded-full">Get Started</Button>
+              <Link to="/signup">
+                <Button size="sm" className="rounded-full">Get Started</Button>
+              </Link>
             </>
           )}
         </div>

@@ -11,6 +11,7 @@ import Article from "./pages/Article";
 import Author from "./pages/Author";
 import NotFound from "./pages/NotFound";
 import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
 import Admin from "./pages/Admin";
 import ArticleEditor from "./pages/ArticleEditor";
 import ManageArticles from "./pages/ManageArticles";
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/article/:slug" element={<Article />} />
             <Route path="/author/:id" element={<Author />} />
             <Route path="/signin" element={<SignIn />} />
+            <Route path="/signup" element={<SignUp />} />
             <Route path="/admin" element={
               <AdminRoute>
                 <Admin />
