@@ -29,11 +29,10 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4">Topics</h3>
             <ul className="space-y-2">
-              <li><Link to="/" className="text-gray-600 hover:text-black">Technology</Link></li>
-              <li><Link to="/" className="text-gray-600 hover:text-black">Travel</Link></li>
-              <li><Link to="/" className="text-gray-600 hover:text-black">Business</Link></li>
-              <li><Link to="/" className="text-gray-600 hover:text-black">Culture</Link></li>
-              <li><Link to="/" className="text-gray-600 hover:text-black">Science</Link></li>
+              <li><Link to="/" className="text-gray-600 hover:text-black">Trading</Link></li>
+              <li><Link to="/" className="text-gray-600 hover:text-black">Python</Link></li>
+              <li><Link to="/" className="text-gray-600 hover:text-black">AI tools</Link></li>
+              <li><Link to="/" className="text-gray-600 hover:text-black">Data Science</Link></li>
             </ul>
           </div>
           
