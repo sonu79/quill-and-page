@@ -18,7 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 // Define the form schema
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  password: z.string().min(1, { message: "Password is required" }),
   rememberMe: z.boolean().default(false)
 });
 
@@ -27,7 +27,12 @@ type FormValues = z.infer<typeof formSchema>;
 const SignIn = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
+  
+  // Redirect if already authenticated
+  if (isAuthenticated) {
+    navigate('/');
+  }
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -41,46 +46,12 @@ const SignIn = () => {
   const onSubmit = async (values: FormValues) => {
     try {
       setIsLoading(true);
-      
-      // This is just a mock authentication for now
-      console.log('Sign in attempt:', values);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock authentication - regular user
-      if (values.email === 'test@example.com' && values.password === 'password123') {
-        const userData = {
-          id: '1',
-          email: values.email,
-          name: 'Test User'
-        };
-        
-        login(userData);
-        toast.success('Successfully signed in!');
-        navigate('/');
-        return;
-      }
-      
-      // Mock authentication - admin user
-      if (values.email === 'admin@example.com' && values.password === 'admin123') {
-        const adminData = {
-          id: '2',
-          email: values.email,
-          name: 'Admin User',
-          isAdmin: true
-        };
-        
-        login(adminData);
-        toast.success('Successfully signed in as admin!');
-        navigate('/admin');
-        return;
-      }
-      
-      toast.error('Invalid email or password');
+      await login(values.email, values.password);
+      toast.success('Successfully signed in!');
+      navigate('/');
     } catch (error) {
+      // Error is already shown in AuthContext
       console.error('Sign in error:', error);
-      toast.error('Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -165,12 +136,6 @@ const SignIn = () => {
                   Sign up
                 </Link>
               </p>
-            </div>
-            
-            <div className="mt-6 pt-6 border-t text-xs text-gray-500">
-              <p>Test accounts:</p>
-              <p>Regular user: test@example.com / password123</p>
-              <p>Admin user: admin@example.com / admin123</p>
             </div>
           </div>
         </div>

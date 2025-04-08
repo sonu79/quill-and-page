@@ -12,11 +12,11 @@ import * as z from 'zod';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { UserPlus } from 'lucide-react';
 
 // Define the form schema
 const formSchema = z.object({
+  username: z.string().min(3, { message: "Username must be at least 3 characters" }),
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
   email: z.string().email({ message: "Please enter a valid email address" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
@@ -31,11 +31,12 @@ type FormValues = z.infer<typeof formSchema>;
 const SignUp = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { signUp } = useAuth();
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      username: '',
       name: '',
       email: '',
       password: '',
@@ -47,37 +48,16 @@ const SignUp = () => {
     try {
       setIsLoading(true);
       
-      // Create user account using Supabase
-      const { data, error } = await supabase.auth.signUp({
-        email: values.email,
-        password: values.password,
-        options: {
-          data: {
-            name: values.name,
-          }
-        }
+      await signUp(values.email, values.password, {
+        name: values.name,
+        username: values.username
       });
       
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
-      
-      if (data.user) {
-        // User created successfully
-        const userData = {
-          id: data.user.id,
-          email: data.user.email!,
-          name: values.name
-        };
-        
-        login(userData);
-        toast.success('Account created successfully!');
-        navigate('/');
-      }
+      toast.success('Account created successfully!');
+      navigate('/');
     } catch (error) {
       console.error('Sign up error:', error);
-      toast.error('Something went wrong. Please try again.');
+      // Toast is already shown in the AuthContext
     } finally {
       setIsLoading(false);
     }
@@ -97,6 +77,20 @@ const SignUp = () => {
           <div className="bg-white p-8 rounded-lg border shadow-sm">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="username"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Username</FormLabel>
+                      <FormControl>
+                        <Input placeholder="yourusername" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
                 <FormField
                   control={form.control}
                   name="name"

@@ -1,5 +1,5 @@
 
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Search, User, LogOut, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,10 +7,12 @@ import { toast } from 'sonner';
 
 const Navbar = () => {
   const { isAuthenticated, isAdmin, user, logout } = useAuth();
+  const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     toast.success('Successfully signed out!');
+    navigate('/');
   };
 
   return (
@@ -35,7 +37,7 @@ const Navbar = () => {
           
           {isAuthenticated ? (
             <div className="flex items-center gap-4">
-              <span className="text-sm hidden md:inline">Hello, {user?.name}</span>
+              <span className="text-sm hidden md:inline">Hello, {user?.name || user?.username}</span>
               
               {isAdmin && (
                 <Link to="/admin">
